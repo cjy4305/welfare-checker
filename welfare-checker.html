@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>복지 자격 확인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1EC;
+    --paper:#FFFFFF;
+    --ink:#17241E;
+    --ink-soft:#5C6B62;
+    --line:#DCE3DA;
+    --line-strong:#B9C4B5;
+    --teal:#1F6F54;
+    --teal-soft:#E4F0EB;
+    --amber:#B9812E;
+    --amber-soft:#F5EADA;
+    --coral:#B24A3A;
+    --coral-soft:#F5E1DD;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.55;
+  }
+
+  .wrap{
+    max-width:880px;
+    margin:0 auto;
+    padding:64px 24px 96px;
+  }
+
+  /* ---------- Hero ---------- */
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.14em;
+    color:var(--teal);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:22px;
+    height:1px;
+    background:var(--teal);
+    display:inline-block;
+  }
+  h1{
+    font-family:'Noto Serif KR', serif;
+    font-weight:900;
+    font-size:clamp(30px, 5vw, 44px);
+    line-height:1.28;
+    margin:0 0 16px;
+    letter-spacing:-0.01em;
+  }
+  .lede{
+    font-size:16px;
+    color:var(--ink-soft);
+    max-width:56ch;
+    margin:0 0 44px;
+  }
+
+  /* ---------- Timeline signature element ---------- */
+  .timeline-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:28px 28px 24px;
+    margin-bottom:36px;
+    display:none;
+  }
+  .timeline-card.show{ display:block; }
+  .timeline-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .timeline-title{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:16px;
+  }
+  .timeline-sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .timeline-track{
+    position:relative;
+    height:6px;
+    background:var(--line);
+    border-radius:3px;
+    margin:0 4px 10px;
+  }
+  .timeline-fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    background:var(--teal);
+    border-radius:3px;
+    width:0%;
+    transition:width 0.6s cubic-bezier(.4,0,.2,1);
+  }
+  .timeline-ticks{
+    position:relative;
+    height:34px;
+    margin:0 4px;
+  }
+  .tick{
+    position:absolute;
+    top:-16px;
+    transform:translateX(-50%);
+    text-align:center;
+    width:60px;
+  }
+  .tick .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--paper);
+    border:2px solid var(--line-strong);
+    margin:0 auto 6px;
+  }
+  .tick.reached .dot{ background:var(--teal); border-color:var(--teal); }
+  .tick .lbl{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .tick.reached .lbl{ color:var(--teal); font-weight:600; }
+  .marker{
+    position:absolute;
+    top:-30px;
+    transform:translateX(-50%);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    background:var(--ink);
+    color:#fff;
+    padding:3px 7px;
+    border-radius:3px;
+    white-space:nowrap;
+  }
+  .marker::after{
+    content:"";
+    position:absolute;
+    bottom:-4px;
+    left:50%;
+    transform:translateX(-50%);
+    border:4px solid transparent;
+    border-top-color:var(--ink);
+  }
+
+  /* ---------- Form ---------- */
+  .form-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:28px;
+    margin-bottom:20px;
+  }
+  .field{ margin-bottom:22px; }
+  .field:last-of-type{ margin-bottom:0; }
+  label.field-label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:10px;
+    color:var(--ink);
+  }
+  .seg{
+    display:flex;
+    border:1px solid var(--line-strong);
+    border-radius:3px;
+    overflow:hidden;
+    width:fit-content;
+  }
+  .seg button{
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:14px;
+    font-weight:500;
+    padding:10px 22px;
+    border:none;
+    background:var(--paper);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  .seg button + button{ border-left:1px solid var(--line-strong); }
+  .seg button.active{
+    background:var(--ink);
+    color:#fff;
+  }
+  input[type="date"], input[type="text"]{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14.5px;
+    padding:10px 14px;
+    border:1px solid var(--line-strong);
+    border-radius:3px;
+    background:var(--paper);
+    color:var(--ink);
+    width:220px;
+    max-width:100%;
+  }
+  input[type="text"]::placeholder{ color:#A9B4A5; font-family:'Noto Sans KR', sans-serif; }
+  select{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14.5px;
+    padding:10px 14px;
+    border:1px solid var(--line-strong);
+    border-radius:3px;
+    background:var(--paper);
+    color:var(--ink);
+    width:220px;
+    max-width:100%;
+    cursor:pointer;
+  }
+  .field-optional{
+    font-family:'Noto Sans KR', sans-serif;
+    font-weight:400;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-left:6px;
+  }
+  .row2{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .row2 .field{ flex:1; min-width:180px; }
+  .status-row{
+    margin-top:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .live-indicator{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .live-dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--line-strong);
+  }
+  .live-indicator.active .live-dot{
+    background:var(--teal);
+    box-shadow:0 0 0 3px var(--teal-soft);
+  }
+  .err{
+    color:var(--coral);
+    font-size:13px;
+    margin-top:4px;
+    display:none;
+  }
+  .err.show{ display:block; }
+
+  /* ---------- Results ---------- */
+  .results{
+    display:none;
+    margin-top:36px;
+  }
+  .results.show{ display:block; }
+  .results-head{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+    padding-bottom:0;
+  }
+  .results-who{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:20px;
+    margin-bottom:14px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--line);
+  }
+  .results-who .sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-left:4px;
+  }
+  .result-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-left:3px solid var(--line-strong);
+    border-radius:2px;
+    padding:20px 22px;
+    margin-bottom:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .result-card.ok{ border-left-color:var(--teal); }
+  .result-card.pending{ border-left-color:var(--amber); }
+  .result-card.no{ border-left-color:var(--coral); }
+  .result-main{ flex:1; min-width:220px; }
+  .result-name{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:16.5px;
+    margin-bottom:6px;
+  }
+  .result-detail{
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .result-detail .mono{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+  }
+  .badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .badge.ok{ background:var(--teal-soft); color:var(--teal); }
+  .badge.pending{ background:var(--amber-soft); color:var(--amber); }
+  .badge.no{ background:var(--coral-soft); color:var(--coral); }
+
+  .footnote{
+    margin-top:28px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    border-top:1px solid var(--line);
+    padding-top:18px;
+  }
+  .footnote p{ margin:4px 0; }
+
+  @media (max-width:520px){
+    .wrap{ padding:44px 18px 72px; }
+    .timeline-ticks{ display:none; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .timeline-fill{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="eyebrow">사내 복지제도 · 자격 확인</div>
+  <h1>내 복지 혜택,<br>지금 바로 확인하세요</h1>
+  <p class="lede">고용 형태와 입사일만 입력하면 복지포인트 · 시그니엘 이용 · 건강검진 대상 여부를 한 번에 확인할 수 있습니다.</p>
+
+  <div class="timeline-card" id="timelineCard">
+    <div class="timeline-head">
+      <div class="timeline-title">근속 타임라인</div>
+      <div class="timeline-sub" id="timelineSub">-</div>
+    </div>
+    <div class="timeline-track"><div class="timeline-fill" id="timelineFill"></div></div>
+    <div class="timeline-ticks" id="timelineTicks"></div>
+  </div>
+
+  <div class="form-card">
+    <div class="row2">
+      <div class="field">
+        <label class="field-label" for="empName">이름</label>
+        <input type="text" id="empName" placeholder="예: 홍길동">
+      </div>
+      <div class="field">
+        <label class="field-label" for="empId">사번</label>
+        <input type="text" id="empId" placeholder="예: 20260001">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">고용 형태</label>
+      <div class="seg" id="empSeg">
+        <button type="button" data-val="regular" class="active">정규직</button>
+        <button type="button" data-val="contract">계약직</button>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label" for="hireDate">입사일</label>
+      <input type="date" id="hireDate">
+    </div>
+    <div class="field">
+      <label class="field-label" for="workplace">사업장(특수지)<span class="field-optional">선택 입력 · 해당자만 결과에 표시됩니다</span></label>
+      <select id="workplace">
+        <option value="">선택 안 함</option>
+        <option value="서산">서산</option>
+        <option value="인제">인제</option>
+        <option value="밀양">밀양</option>
+      </select>
+    </div>
+    <div class="status-row">
+      <div class="err" id="errMsg">이름, 사번, 입사일을 모두 입력해 주세요.</div>
+      <div class="live-indicator" id="liveIndicator"><span class="live-dot"></span><span id="liveText">입력을 기다리는 중</span></div>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="results-head">확인 결과</div>
+    <div class="results-who" id="resultsWho"></div>
+    <div class="result-card" id="cardPoint">
+      <div class="result-main">
+        <div class="result-name">복지포인트</div>
+        <div class="result-detail" id="pointDetail"></div>
+      </div>
+      <div class="badge" id="pointBadge"></div>
+    </div>
+    <div class="result-card" id="cardSignature">
+      <div class="result-main">
+        <div class="result-name">시그니엘 이용</div>
+        <div class="result-detail" id="signatureDetail"></div>
+      </div>
+      <div class="badge" id="signatureBadge"></div>
+    </div>
+    <div class="result-card" id="cardCheckup">
+      <div class="result-main">
+        <div class="result-name">건강검진</div>
+        <div class="result-detail" id="checkupDetail"></div>
+      </div>
+      <div class="badge" id="checkupBadge"></div>
+    </div>
+    <div class="result-card" id="cardSpecial" style="display:none;">
+      <div class="result-main">
+        <div class="result-name">특수지 수당</div>
+        <div class="result-detail" id="specialDetail"></div>
+      </div>
+      <div class="badge" id="specialBadge"></div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <p>* 실제 지급 금액 및 세부 운영 기준은 인사팀 공지를 우선으로 합니다. 이 페이지는 참고용 자가진단 도구입니다.</p>
+    <p id="asOfNote"></p>
+  </div>
+
+</div>
+
+<script>
+/* ======================================================================
+   설정값 (CONFIG) — 실제 사내 기준이 확정되면 아래 값만 수정하면 됩니다.
+   ====================================================================== */
+const CONFIG = {
+  // 오늘 날짜를 고정하고 싶으면 'YYYY-MM-DD' 문자열을, 실시간 반영하려면 null을 사용
+  fixedToday: null,
+
+  point: {
+    // 계약직: 입사 후 이 기간을 "초과"한 다음날부터 지급 시작 (예: 26.5.1 입사 -> 27.5.2 시작)
+    contractGraceYears: 1,
+    // 근속연수 구간별 지급액 (원). minYears 이상 ~ maxYears 미만.
+    tiers: [
+      { minYears: 0,  maxYears: 5,        amount: 1500000 },
+      { minYears: 5,  maxYears: 10,       amount: 1900000 },
+      { minYears: 10, maxYears: 15,       amount: 2300000 },
+      { minYears: 15, maxYears: 20,       amount: 2700000 },
+      { minYears: 20, maxYears: 30,       amount: 2800000 },
+      { minYears: 30, maxYears: Infinity, amount: 2900000 }
+    ]
+  },
+
+  healthCheckup: {
+    // 이 날짜 이전(포함) 입사자만 2026년 검진 대상으로 처리
+    cutoffDate2026: '2026-02-21',
+    note2027: '2027년 검진 기준은 아직 확정되지 않았습니다. 별도 공지 예정입니다.'
+  },
+
+  // 사업장(특수지) 수당 — 월 지급액(원). 목록에 없는 값이 들어오면 결과 카드를 표시하지 않음.
+  specialLocation: {
+    '서산': 250000,
+    '인제': 200000,
+    '밀양': 150000
+  }
+};
+
+/* ---------------------------------------------------------------------- */
+
+function today(){
+  return CONFIG.fixedToday ? new Date(CONFIG.fixedToday + 'T00:00:00') : new Date();
+}
+
+function fmt(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}.${m}.${day}`;
+}
+
+function addYears(d, n){
+  const r = new Date(d);
+  r.setFullYear(r.getFullYear()+n);
+  return r;
+}
+function addDays(d, n){
+  const r = new Date(d);
+  r.setDate(r.getDate()+n);
+  return r;
+}
+
+// 근속연수: 입사일의 "일(day)"은 무시하고, 입사한 월을 기준으로 매년 그 달에 연차가 올라감
+// 예: 2023년 7월 입사 -> ~2024년 6월까지 0년차, 2024년 7월부터 1년차
+function monthIndex(d){
+  return d.getFullYear()*12 + d.getMonth();
+}
+function tenureYears(hire, ref){
+  const diff = monthIndex(ref) - monthIndex(hire);
+  return Math.max(0, Math.floor(diff/12));
+}
+// 구간 경계일: hire와 같은 월의 1일, 연도만 이동
+function tierBoundaryDate(hire, boundaryYears){
+  return new Date(hire.getFullYear()+boundaryYears, hire.getMonth(), 1);
+}
+function findTier(years){
+  return CONFIG.point.tiers.find(t => years >= t.minYears && years < t.maxYears);
+}
+function tierLabel(t){
+  if(t.maxYears === Infinity) return `${t.minYears}년 이상`;
+  return `${t.minYears}년 이상 ~ ${t.maxYears}년 미만`;
+}
+
+function daysBetween(a, b){
+  return Math.round((b - a) / 86400000);
+}
+
+/* ---------------------------------------------------------------------- */
+
+let empType = 'regular';
+
+const empSeg = document.getElementById('empSeg');
+empSeg.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  [...empSeg.children].forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  empType = btn.dataset.val;
+  run();
+});
+
+/* ---- 실시간 자동 계산: 입력마다 debounce 후 재계산 ---- */
+let debounceTimer = null;
+function scheduleRun(){
+  const indicator = document.getElementById('liveIndicator');
+  indicator.classList.remove('active');
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(()=>{
+    run();
+  }, 250);
+}
+
+['empName','empId','hireDate'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', scheduleRun);
+  document.getElementById(id).addEventListener('change', scheduleRun);
+});
+document.getElementById('workplace').addEventListener('change', scheduleRun);
+
+function run(){
+  const nameVal = document.getElementById('empName').value.trim();
+  const idVal = document.getElementById('empId').value.trim();
+  const hireVal = document.getElementById('hireDate').value;
+  const errEl = document.getElementById('errMsg');
+  const indicator = document.getElementById('liveIndicator');
+  const liveText = document.getElementById('liveText');
+
+  if(!nameVal || !idVal || !hireVal){
+    errEl.textContent = '이름, 사번, 입사일을 모두 입력해 주세요.';
+    errEl.classList.add('show');
+    document.getElementById('results').classList.remove('show');
+    indicator.classList.remove('active');
+    liveText.textContent = '입력을 기다리는 중';
+    return;
+  }
+
+  const hire = new Date(hireVal + 'T00:00:00');
+  const ref = today();
+
+  if(hire > ref){
+    errEl.textContent = '입사일이 오늘 이후입니다. 날짜를 다시 확인해 주세요.';
+    errEl.classList.add('show');
+    document.getElementById('results').classList.remove('show');
+    return;
+  }
+
+  errEl.classList.remove('show');
+
+  renderTimeline(hire, ref);
+  renderPoint(hire, ref);
+  renderSignature();
+  renderCheckup(hire, ref);
+  renderSpecialLocation();
+
+  document.getElementById('resultsWho').innerHTML = `${escapeHtml(nameVal)}님<span class="sub">사번 ${escapeHtml(idVal)}</span>`;
+  document.getElementById('results').classList.add('show');
+  document.getElementById('asOfNote').textContent = `* 기준일: ${fmt(ref)}`;
+
+  indicator.classList.add('active');
+  liveText.textContent = '자동으로 계산됨 · 입력을 바꾸면 즉시 갱신됩니다';
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- 타임라인 ---------- */
+function renderTimeline(hire, ref){
+  const years = tenureYears(hire, ref);
+  const breakpoints = [0, ...CONFIG.point.tiers.map(t=>t.maxYears).filter(y=>y!==Infinity)];
+  const span = Math.max(breakpoints[breakpoints.length-1] + 5, years + 5);
+
+  const track = document.getElementById('timelineTicks');
+  track.innerHTML = '';
+  const fillPct = Math.min(100, (years/span)*100);
+  document.getElementById('timelineFill').style.width = fillPct + '%';
+
+  breakpoints.forEach(y=>{
+    const tick = document.createElement('div');
+    tick.className = 'tick' + (years>=y ? ' reached' : '');
+    tick.style.left = ((y/span)*100) + '%';
+    tick.innerHTML = `<div class="dot"></div><div class="lbl">${y}년</div>`;
+    track.appendChild(tick);
+  });
+
+  const marker = document.createElement('div');
+  marker.className = 'marker';
+  marker.style.left = fillPct + '%';
+  marker.textContent = `현재 ${years}년차`;
+  track.appendChild(marker);
+
+  document.getElementById('timelineSub').textContent = `입사일 ${fmt(hire)} · 기준일 ${fmt(ref)}`;
+  document.getElementById('timelineCard').classList.add('show');
+}
+
+/* ---------- 복지포인트 ---------- */
+function renderPoint(hire, ref){
+  const badge = document.getElementById('pointBadge');
+  const detail = document.getElementById('pointDetail');
+  const card = document.getElementById('cardPoint');
+  card.classList.remove('ok','pending','no');
+
+  const years = tenureYears(hire, ref);
+
+  function tierBlock(years, prefix){
+    const tier = findTier(years);
+    const tierIdx = CONFIG.point.tiers.indexOf(tier);
+    const amtText = `${tier.amount.toLocaleString()}원`;
+    let nextText = '';
+    if(tier.maxYears !== Infinity){
+      const nextDate = tierBoundaryDate(hire, tier.maxYears);
+      const dday = daysBetween(ref, nextDate);
+      const nextTier = CONFIG.point.tiers[tierIdx+1];
+      nextText = `<br>다음 구간까지 <span class="mono">D-${dday}</span> (${fmt(nextDate)}부터 ${nextTier.amount.toLocaleString()}원)`;
+    } else {
+      nextText = `<br>최고 구간이 적용 중입니다.`;
+    }
+    return `${prefix}근속 <span class="mono">${years}년차</span> · 구간 <span class="mono">${tierLabel(tier)}</span> · <span class="mono">${amtText}</span>${nextText}`;
+  }
+
+  if(empType === 'regular'){
+    card.classList.add('ok');
+    badge.className = 'badge ok';
+    badge.textContent = '지급 대상';
+    detail.innerHTML = tierBlock(years, '');
+  } else {
+    const grace = CONFIG.point.contractGraceYears;
+    const startDate = addDays(addYears(hire, grace), 1);
+    if(ref >= startDate){
+      card.classList.add('ok');
+      badge.className = 'badge ok';
+      badge.textContent = '지급 대상';
+      detail.innerHTML = `<span class="mono">${fmt(startDate)}</span>부터 지급 시작<br>` + tierBlock(years, '');
+    } else {
+      const dday = daysBetween(ref, startDate);
+      card.classList.add('pending');
+      badge.className = 'badge pending';
+      badge.textContent = '지급 예정';
+      detail.innerHTML = `입사 ${grace}년 초과 시점인 <span class="mono">${fmt(startDate)}</span>부터 지급 예정 (<span class="mono">D-${dday}</span>)`;
+    }
+  }
+}
+
+/* ---------- 특수지 수당 (선택 입력) ---------- */
+function renderSpecialLocation(){
+  const card = document.getElementById('cardSpecial');
+  const place = document.getElementById('workplace').value;
+  const amount = CONFIG.specialLocation[place];
+
+  if(!place || !amount){
+    card.style.display = 'none';
+    return;
+  }
+
+  const badge = document.getElementById('specialBadge');
+  const detail = document.getElementById('specialDetail');
+  card.classList.remove('ok','pending','no');
+  card.classList.add('ok');
+  badge.className = 'badge ok';
+  badge.textContent = '지급 대상';
+  detail.innerHTML = `사업장 <span class="mono">${escapeHtml(place)}</span> · 월 <span class="mono">${amount.toLocaleString()}원</span><br><span style="font-size:12px;">(※해당 월 만근 기준, 1~10일 근무시 10일 치 일할계산 지급)</span>`;
+  card.style.display = 'flex';
+}
+function renderSignature(){
+  const badge = document.getElementById('signatureBadge');
+  const detail = document.getElementById('signatureDetail');
+  const card = document.getElementById('cardSignature');
+  card.classList.remove('ok','pending','no');
+  card.classList.add('ok');
+  badge.className = 'badge ok';
+  badge.textContent = '이용 가능';
+  detail.textContent = '별도의 자격 조건 없이 전 직원 이용 가능합니다.';
+}
+
+/* ---------- 건강검진 ---------- */
+function renderCheckup(hire, ref){
+  const badge = document.getElementById('checkupBadge');
+  const detail = document.getElementById('checkupDetail');
+  const card = document.getElementById('cardCheckup');
+  card.classList.remove('ok','pending','no');
+
+  const cutoff = new Date(CONFIG.healthCheckup.cutoffDate2026 + 'T00:00:00');
+  const isTarget2026 = hire <= cutoff;
+
+  if(isTarget2026){
+    card.classList.add('ok');
+    badge.className = 'badge ok';
+    badge.textContent = '2026년 대상';
+    detail.innerHTML = `입사일이 기준일(<span class="mono">${fmt(cutoff)}</span>) 이전이므로 2026년 건강검진 대상입니다.`;
+  } else {
+    card.classList.add('no');
+    badge.className = 'badge no';
+    badge.textContent = '2026년 미대상';
+    detail.innerHTML = `입사일이 기준일(<span class="mono">${fmt(cutoff)}</span>) 이후로, 2026년 검진 대상에는 포함되지 않습니다.`;
+  }
+  detail.innerHTML += `<br>${CONFIG.healthCheckup.note2027}`;
+}
+</script>
+
+</body>
+</html>
